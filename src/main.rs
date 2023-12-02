@@ -56,11 +56,9 @@ impl Error for MyServiceError {
 // 非同期のリポジトリ関数
 #[instrument]
 async fn repository(a: i32, b: i32) -> Result<(), MyRepoError> {
-    Err(MyRepoError::new(
-        "repository ERROR".to_string(),
-        file!(),
-        line!(),
-    ))
+    let err = MyRepoError::new("repository ERROR".to_string(), file!(), line!());
+    error!("{}", &err);
+    Err(err)
 }
 
 // 非同期のサービス関数
