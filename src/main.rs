@@ -1,8 +1,19 @@
-use std::{error::Error, fmt};
+use thiserror::Error;
 use tracing::{error, instrument, Span};
 
-#[derive(Debug)]
+fn log_error_and_convert<E, T>(error: E) -> T
+where
+    E: Into<T>,
+    T: std::fmt::Display + std::fmt::Debug,
+{
+    let err: T = error.into();
+    error!("{} ({}:{})", err, file!(), line!());
+    err
+}
+
+#[derive(Debug, Error)]
 enum ServiceError {
+    #[error("HogeError: {0}")]
     HogeError(String),
 }
 
@@ -11,15 +22,6 @@ impl From<String> for ServiceError {
         Self::HogeError(err)
     }
 }
-
-impl fmt::Display for ServiceError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::HogeError(err) => write!(f, "HogeError: {}", err),
-        }
-    }
-}
-impl Error for ServiceError {}
 
 #[instrument(name="main/service", skip_all, fields(x = %x, y))]
 async fn service(x: i32, y: i32) -> Result<(), ServiceError> {
@@ -45,14 +47,4 @@ async fn main() {
     let x = 100;
     let y = 100;
     use_case(x, y).await;
-}
-
-fn log_error_and_convert<E, T>(error: E) -> T
-where
-    E: Into<T>,
-    T: std::fmt::Display + std::fmt::Debug,
-{
-    let err: T = error.into();
-    error!("{} ({}:{})", err, file!(), line!());
-    err
 }
